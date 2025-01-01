@@ -1,0 +1,109 @@
+from django.shortcuts import render, get_object_or_404
+from django.views import View
+from .models import Career, Category
+from django.db.models import Q
+from django.http import JsonResponse
+import json
+from .services.openai_service import CareerCounselorAI
+from django.conf import settings
+from django.utils.decorators import method_decorator
+from django.views.decorators.csrf import csrf_exempt
+
+def career_list(request):
+    categories = Category.objects.all()
+    careers = Career.objects.all().order_by('-created_at')
+    
+    search_query = request.GET.get('search', '')
+    if search_query:
+        careers = careers.filter(
+            Q(name__icontains=search_query) |
+            Q(description__icontains=search_query)
+        )
+    
+    category_id = request.GET.get('category')
+    if category_id:
+        careers = careers.filter(category_id=category_id)
+    
+    context = {
+        'careers': careers,
+        'categories': categories,
+        'search_query': search_query,
+        'selected_category': category_id
+    }
+    return render(request, 'careers/career_list.html', context)
+
+@method_decorator(csrf_exempt, name='dispatch')
+class AICounselorView(View):
+    template_name = 'careers/ai_counselor.html'
+
+    def __init__(self, **kwargs):
+        super().__init__(**kwargs)
+        self.ai_service = None  # Initialize in get/post methods to avoid issues with multiple threads
+
+    def get(self, request, *args, **kwargs):
+        return render(request, self.template_name)
+
+    def post(self, request, *args, **kwargs):
+        try:
+            # Initialize AI service for this request
+            if self.ai_service is None:
+                self.ai_service = CareerCounselorAI()
+
+            # Parse the request data
+            data = json.loads(request.body)
+            user_message = data.get('message', '')
+            
+            if not user_message.strip():
+                return JsonResponse({
+                    'error': 'Please provide a message'
+                }, status=400)
+
+            # Get AI response
+            try:
+                response = self.ai_service.get_career_advice(user_message)
+                return JsonResponse({'response': response})
+            except Exception as e:
+                print(f"AI Service Error: {str(e)}")
+                # Fallback to rule-based response
+                fallback_response = self.get_rule_based_response(user_message.lower())
+                return JsonResponse({'response': fallback_response})
+
+        except json.JSONDecodeError:
+            return JsonResponse({
+                'error': 'Invalid JSON data'
+            }, status=400)
+        except Exception as e:
+            print(f"Unexpected error in post: {str(e)}")
+            return JsonResponse({
+                'error': 'An unexpected error occurred'
+            }, status=500)
+
+    def get_rule_based_response(self, user_message):
+        """Provides fallback responses when AI service fails"""
+        if any(word in user_message for word in ['hello', 'hi', 'hey', 'greetings']):
+            return "Hello! I'm Bedford's AI Career Counselor. I'm here to help you explore different career paths. What kind of career interests you?"
+
+        elif any(word in user_message for word in ['technology', 'programming', 'software', 'it', 'computer']):
+            return ("In the technology field, there are many exciting career paths:\n\n"
+                   "1. Software Development: Creating applications and systems\n"
+                   "2. Data Science: Analyzing data to derive insights\n"
+                   "3. Cybersecurity: Protecting systems and data\n"
+                   "4. AI/Machine Learning: Developing intelligent systems\n"
+                   "5. Cloud Computing: Managing cloud infrastructure\n\n"
+                   "Which of these areas interests you the most?")
+
+        elif any(word in user_message for word in ['medicine', 'doctor', 'health', 'medical', 'healthcare']):
+            return ("Healthcare offers many rewarding career paths:\n\n"
+                   "1. Medical Doctor: Various specializations available\n"
+                   "2. Nursing: Direct patient care\n"
+                   "3. Pharmacy: Medicine and drug expertise\n"
+                   "4. Physical Therapy: Rehabilitation services\n"
+                   "5. Medical Technology: Laboratory and diagnostic work\n\n"
+                   "Would you like to learn more about any of these areas?")
+        
+        return ("I'm here to help you explore career options! You can ask me about:\n\n"
+               "1. Different career fields (technology, healthcare, business, etc.)\n"
+               "2. Specific job roles and their requirements\n"
+               "3. Salary ranges and job prospects\n"
+               "4. Educational requirements\n\n"
+               "What would you like to know more about?")

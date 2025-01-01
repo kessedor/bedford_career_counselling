@@ -1,0 +1,651 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="row">
+        <!-- Left Sidebar -->
+        <div class="col-md-3">
+            <div class="sidebar-container">
+                <h4>Quick Links</h4>
+                <div class="quick-links">
+                    <button class="quick-link-btn" onclick="askQuestion('Tell me about JAMB requirements')">JAMB Requirements</button>
+                    <button class="quick-link-btn" onclick="askQuestion('What are the top universities in Nigeria?')">Top Universities</button>
+                    <button class="quick-link-btn" onclick="askQuestion('What are the highest paying careers in Nigeria?')">Top Careers</button>
+                    <button class="quick-link-btn" onclick="askQuestion('How can I prepare for JAMB?')">JAMB Preparation</button>
+                </div>
+
+                <div class="chat-actions">
+                    <button onclick="clearChat()" class="action-btn">Clear Chat</button>
+                    <button onclick="shareChat()" class="action-btn">Share Chat</button>
+                    <button onclick="downloadChat()" class="action-btn">Save Chat</button>
+                </div>
+
+                <div class="coming-soon-features">
+                    <h4>Coming Soon! 🚀</h4>
+                    <ul>
+                        <li>AI-Powered CV Builder</li>
+                        <li>Automated Job Applications</li>
+                        <li>Interview Preparation</li>
+                        <li>Scholarship Matcher</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+
+        <!-- Main Chat Area -->
+        <div class="col-md-6">
+            <div class="chat-container">
+                <div class="chat-header">
+                    <h2>AI Career Counselor</h2>
+                    <p class="text-muted">Your Nigerian Education & Career Guide</p>
+                </div>
+
+                <div class="chat-messages" id="chat-messages">
+                    <!-- Messages will appear here -->
+                </div>
+                
+                <div class="typing-indicator" id="typing-indicator" style="display: none;">
+                    <div class="typing-bubble">
+                        <div class="dot"></div>
+                        <div class="dot"></div>
+                        <div class="dot"></div>
+                    </div>
+                    <div class="typing-label">AI is thinking...</div>
+                </div>
+
+                <div class="chat-input-container">
+                    <input type="text" 
+                           id="user-input" 
+                           placeholder="Ask about careers, JAMB, universities..." 
+                           class="chat-input"
+                           autocomplete="off">
+                    <button onclick="sendMessage()" class="send-button" id="send-button">
+                        <span class="button-text">Send</span>
+                        <div class="button-loader" style="display: none;">
+                            <div class="spinner"></div>
+                        </div>
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Right Sidebar -->
+        <div class="col-md-3">
+            <div class="sidebar-container">
+                <h4>Share Results</h4>
+                <div class="share-buttons">
+                    <button onclick="shareViaWhatsApp()" class="share-btn whatsapp">
+                        Share via WhatsApp
+                    </button>
+                    <button onclick="shareViaTelegram()" class="share-btn telegram">
+                        Share via Telegram
+                    </button>
+                </div>
+
+                <div class="suggested-topics">
+                    <h4>Suggested Topics</h4>
+                    <div class="topic-category">
+                        <h5>Education</h5>
+                        <ul>
+                            <li><a href="#" onclick="askQuestion('What are JAMB subject combinations for Medicine?')">JAMB Subjects</a></li>
+                            <li><a href="#" onclick="askQuestion('What are the university cut-off marks?')">Cut-off Marks</a></li>
+                            <li><a href="#" onclick="askQuestion('Tell me about direct entry admission')">Direct Entry</a></li>
+                        </ul>
+                    </div>
+                    <div class="topic-category">
+                        <h5>Career Paths</h5>
+                        <ul>
+                            <li><a href="#" onclick="askQuestion('What are the best paying jobs in Nigeria?')">Top Paying Jobs</a></li>
+                            <li><a href="#" onclick="askQuestion('What tech careers are in demand?')">Tech Careers</a></li>
+                            <li><a href="#" onclick="askQuestion('What medical careers can I pursue?')">Medical Careers</a></li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Share Modal -->
+<div class="modal" id="shareModal">
+    <div class="modal-content">
+        <span class="close">&times;</span>
+        <h2>Share Chat</h2>
+        <textarea id="shareText" readonly></textarea>
+        <div class="modal-buttons">
+            <button onclick="copyToClipboard()">Copy to Clipboard</button>
+            <button onclick="downloadAsText()">Download as Text</button>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_css %}
+<style>
+    :root {
+        --primary-color: #003366;
+        --secondary-color: #cc0000;
+        --accent-color: #004d99;
+        --background-color: #f0f8ff;
+    }
+
+    .chat-container {
+        max-width: 800px;
+        margin: 20px auto;
+        padding: 20px;
+        border-radius: 10px;
+        box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        background: white;
+    }
+
+    .chat-header {
+        text-align: center;
+        margin-bottom: 20px;
+        padding-bottom: 20px;
+        border-bottom: 1px solid #eee;
+    }
+
+    .chat-messages {
+        height: 500px;
+        overflow-y: auto;
+        padding: 20px;
+        background: #f8f9fa;
+        border-radius: 10px;
+        margin-bottom: 20px;
+    }
+
+    .message {
+        margin: 10px 0;
+        padding: 12px 16px;
+        border-radius: 15px;
+        max-width: 70%;
+        word-wrap: break-word;
+        position: relative;
+        animation: messageAppear 0.3s ease-out;
+    }
+
+    @keyframes messageAppear {
+        from { opacity: 0; transform: translateY(10px); }
+        to { opacity: 1; transform: translateY(0); }
+    }
+
+    .user-message {
+        background: var(--primary-color);
+        color: white;
+        margin-left: auto;
+    }
+
+    .ai-message {
+        background: white;
+        border: 1px solid #ddd;
+        margin-right: auto;
+    }
+
+    .chat-input-container {
+        display: flex;
+        gap: 10px;
+        padding: 15px;
+        background: #f8f9fa;
+        border-radius: 10px;
+        position: relative;
+    }
+
+    .chat-input {
+        flex: 1;
+        padding: 12px 15px;
+        border: 1px solid #ddd;
+        border-radius: 25px;
+        font-size: 16px;
+        transition: border-color 0.3s;
+    }
+
+    .chat-input:focus {
+        outline: none;
+        border-color: var(--primary-color);
+    }
+
+    .send-button {
+        padding: 12px 25px;
+        background: var(--secondary-color);
+        color: white;
+        border: none;
+        border-radius: 25px;
+        cursor: pointer;
+        transition: all 0.3s;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+
+    .send-button:hover {
+        background: #a30000;
+        transform: translateY(-2px);
+    }
+
+    .send-button:disabled {
+        background: #cccccc;
+        cursor: not-allowed;
+    }
+
+    /* Sidebar styles */
+    .sidebar-container {
+        background: white;
+        border-radius: 10px;
+        padding: 20px;
+        margin: 20px 10px;
+        box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+    }
+
+    .quick-links {
+        display: flex;
+        flex-direction: column;
+        gap: 10px;
+        margin-bottom: 20px;
+    }
+
+    .quick-link-btn {
+        padding: 10px;
+        border: none;
+        border-radius: 5px;
+        background: #f0f2f5;
+        cursor: pointer;
+        transition: all 0.3s;
+    }
+
+    .quick-link-btn:hover {
+        background: #e4e6e9;
+        transform: translateY(-2px);
+    }
+
+    .chat-actions {
+        display: flex;
+        flex-direction: column;
+        gap: 10px;
+        margin: 20px 0;
+    }
+
+    .action-btn {
+        padding: 10px;
+        border: none;
+        border-radius: 5px;
+        background: var(--primary-color);
+        color: white;
+        cursor: pointer;
+        transition: all 0.3s;
+    }
+
+    .action-btn:hover {
+        background: var(--accent-color);
+        transform: translateY(-2px);
+    }
+
+    .share-buttons {
+        display: flex;
+        flex-direction: column;
+        gap: 10px;
+        margin-bottom: 20px;
+    }
+
+    .share-btn {
+        padding: 10px;
+        border: none;
+        border-radius: 5px;
+        cursor: pointer;
+        transition: all 0.3s;
+        color: white;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+
+    .whatsapp {
+        background: #25D366;
+    }
+
+    .telegram {
+        background: #0088cc;
+    }
+
+    .share-btn:hover {
+        transform: translateY(-2px);
+        filter: brightness(1.1);
+    }
+
+    .typing-bubble {
+        background: white;
+        padding: 15px;
+        border-radius: 20px;
+        display: inline-flex;
+        gap: 5px;
+    }
+
+    .typing-label {
+        color: #666;
+        margin-top: 5px;
+        font-size: 0.9em;
+    }
+
+    /* Modal styles */
+    .modal {
+        display: none;
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: rgba(0,0,0,0.5);
+        z-index: 1000;
+    }
+
+    .modal-content {
+        background: white;
+        margin: 15% auto;
+        padding: 20px;
+        border-radius: 10px;
+        width: 80%;
+        max-width: 500px;
+        position: relative;
+    }
+
+    .close {
+        position: absolute;
+        right: 20px;
+        top: 15px;
+        cursor: pointer;
+        font-size: 24px;
+    }
+
+    #shareText {
+        width: 100%;
+        height: 150px;
+        margin: 10px 0;
+        padding: 10px;
+        border: 1px solid #ddd;
+        border-radius: 5px;
+    }
+
+    .modal-buttons {
+        display: flex;
+        gap: 10px;
+        justify-content: flex-end;
+    }
+
+    .modal-buttons button {
+        padding: 8px 15px;
+        border: none;
+        border-radius: 5px;
+        background: var(--primary-color);
+        color: white;
+        cursor: pointer;
+        transition: all 0.3s;
+    }
+
+    .modal-buttons button:hover {
+        background: var(--accent-color);
+    }
+
+    /* Mobile optimizations */
+    @media (max-width: 768px) {
+        .col-md-3 {
+            display: none;
+        }
+        
+        .col-md-6 {
+            width: 100%;
+            padding: 0 10px;
+        }
+
+        .chat-container {
+            margin: 10px 0;
+            padding: 15px;
+        }
+
+        .chat-actions {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            background: white;
+            padding: 10px;
+            box-shadow: 0 -2px 10px rgba(0,0,0,0.1);
+            flex-direction: row;
+            justify-content: space-around;
+            z-index: 100;
+            margin: 0;
+        }
+
+        .chat-container {
+            margin-bottom: 70px;
+        }
+
+        .message {
+            max-width: 85%;
+        }
+
+        .modal-content {
+            width: 95%;
+            margin: 50% auto;
+        }
+    }
+</style>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+let isProcessing = false;
+
+function addMessage(message, isUser = false) {
+    const messagesDiv = document.getElementById('chat-messages');
+    const messageDiv = document.createElement('div');
+    messageDiv.className = `message ${isUser ? 'user-message' : 'ai-message'}`;
+    messageDiv.textContent = message;
+    messagesDiv.appendChild(messageDiv);
+    messagesDiv.scrollTop = messagesDiv.scrollHeight;
+}
+
+function showTypingIndicator() {
+    document.getElementById('typing-indicator').style.display = 'flex';
+}
+
+function hideTypingIndicator() {
+    document.getElementById('typing-indicator').style.display = 'none';
+}
+
+function toggleInputState(disabled) {
+    const inputElement = document.getElementById('user-input');
+    const sendButton = document.getElementById('send-button');
+    
+    inputElement.disabled = disabled;
+    sendButton.disabled = disabled;
+    
+    if (disabled) {
+        sendButton.textContent = 'Sending...';
+    } else {
+        sendButton.textContent = 'Send';
+    }
+}
+
+async function sendMessage() {
+    if (isProcessing) return;
+
+    const inputElement = document.getElementById('user-input');
+    const message = inputElement.value.trim();
+    
+    if (!message) return;
+
+    // Save to local storage before sending
+    saveToLocalStorage(message, true);
+
+    isProcessing = true;
+    toggleInputState(true);
+    addMessage(message, true);
+    inputElement.value = '';
+    
+    showTypingIndicator();
+
+    try {
+        const response = await fetch('/careers/ai-counselor/', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRFToken': getCookie('csrftoken')
+            },
+            body: JSON.stringify({ message: message })
+        });
+
+        const data = await response.json();
+        hideTypingIndicator();
+        
+        if (data.error) {
+            addMessage('Sorry, I encountered an error. Please try again.');
+        } else {
+            addMessage(data.response);
+            // Save AI response to local storage
+            saveToLocalStorage(data.response, false);
+        }
+    } catch (error) {
+        hideTypingIndicator();
+        addMessage('Sorry, I encountered an error. Please try again.');
+        console.error('Error:', error);
+    }
+
+    isProcessing = false;
+    toggleInputState(false);
+}
+
+function getCookie(name) {
+    let cookieValue = null;
+    if (document.cookie && document.cookie !== '') {
+        const cookies = document.cookie.split(';');
+        for (let i = 0; i < cookies.length; i++) {
+            const cookie = cookies[i].trim();
+            if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                break;
+            }
+        }
+    }
+    return cookieValue;
+}
+
+function askQuestion(question) {
+    const inputElement = document.getElementById('user-input');
+    inputElement.value = question;
+    sendMessage();
+}
+
+function saveToLocalStorage(message, isUser) {
+    let chatHistory = JSON.parse(localStorage.getItem('chatHistory') || '[]');
+    chatHistory.push({ message, isUser, timestamp: new Date().toISOString() });
+    localStorage.setItem('chatHistory', JSON.stringify(chatHistory));
+}
+
+function loadChatHistory() {
+    const chatHistory = JSON.parse(localStorage.getItem('chatHistory') || '[]');
+    chatHistory.forEach(item => {
+        addMessage(item.message, item.isUser);
+    });
+}
+
+function clearChat() {
+    if (confirm('Are you sure you want to clear the chat history?')) {
+        localStorage.removeItem('chatHistory');
+        document.getElementById('chat-messages').innerHTML = '';
+        addMessage("Hello! I'm Bedford's AI Career Counselor. How can I help you today?");
+    }
+}
+
+function shareChat() {
+    const modal = document.getElementById('shareModal');
+    const shareText = document.getElementById('shareText');
+    const messages = document.querySelectorAll('.message');
+    let chatContent = "Bedford Career Counselling Chat History\n\n";
+    
+    messages.forEach(msg => {
+        const isUser = msg.classList.contains('user-message');
+        chatContent += `${isUser ? 'You' : 'AI'}: ${msg.textContent}\n\n`;
+    });
+    
+    shareText.value = chatContent;
+    modal.style.display = 'block';
+}
+
+function shareViaWhatsApp() {
+    const messages = document.querySelectorAll('.message');
+    let chatContent = "Bedford Career Counselling Chat:\n\n";
+    messages.forEach(msg => {
+        chatContent += `${msg.textContent}\n\n`;
+    });
+    
+    const encodedText = encodeURIComponent(chatContent);
+    window.open(`https://wa.me/?text=${encodedText}`, '_blank');
+}
+
+function shareViaTelegram() {
+    const messages = document.querySelectorAll('.message');
+    let chatContent = "Bedford Career Counselling Chat:\n\n";
+    messages.forEach(msg => {
+        chatContent += `${msg.textContent}\n\n`;
+    });
+    
+    const encodedText = encodeURIComponent(chatContent);
+    window.open(`https://t.me/share/url?url=&text=${encodedText}`, '_blank');
+}
+
+function copyToClipboard() {
+    const shareText = document.getElementById('shareText');
+    shareText.select();
+    document.execCommand('copy');
+    alert('Copied to clipboard!');
+}
+
+function downloadChat() {
+    const messages = document.querySelectorAll('.message');
+    let chatContent = "Bedford Career Counselling Chat History\n\n";
+    messages.forEach(msg => {
+        const isUser = msg.classList.contains('user-message');
+        chatContent += `${isUser ? 'You' : 'AI'}: ${msg.textContent}\n\n`;
+    });
+    
+    const blob = new Blob([chatContent], { type: 'text/plain' });
+    const url = window.URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = 'career-counselling-chat.txt';
+    document.body.appendChild(a);
+    a.click();
+    window.URL.revokeObjectURL(url);
+    document.body.removeChild(a);
+}
+
+document.addEventListener('DOMContentLoaded', function() {
+    loadChatHistory();
+    if (document.getElementById('chat-messages').children.length === 0) {
+        addMessage("Hello! I'm Bedford's AI Career Counselor, specialized in Nigerian education and career guidance. I can help you with:\n\n" +
+                  "1. JAMB/UTME preparation and requirements\n" +
+                  "2. University course selection\n" +
+                  "3. Career paths and requirements\n" +
+                  "4. Nigerian salary ranges\n" +
+                  "5. Professional certifications\n\n" +
+                  "What would you like to know about?");
+    }
+});
+
+// Add Enter key event listener
+document.getElementById('user-input').addEventListener('keypress', function(e) {
+    if (e.key === 'Enter' && !e.shiftKey) {
+        e.preventDefault();
+        sendMessage();
+    }
+});
+
+// Close modal when clicking outside
+window.onclick = function(event) {
+    const modal = document.getElementById('shareModal');
+    if (event.target == modal) {
+        modal.style.display = "none";
+    }
+}
+</script>
+{% endblock %}
