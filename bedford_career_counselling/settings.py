@@ -1,6 +1,24 @@
+
+import os
 from pathlib import Path
 from dotenv import load_dotenv
-import os
+
+# Debug prints
+print("Current working directory:", os.getcwd())
+print("Looking for .env file...")
+env_path = Path('.') / '.env'
+print(f".env file exists: {env_path.exists()}")
+
+# Load environment variables
+load_dotenv()
+
+# More debug prints
+print("Environment variables loaded")
+print(f"OPENAI_API_KEY loaded: {'Yes' if os.getenv('OPENAI_API_KEY') else 'No'}")
+print(f"OPENAI_API_KEY first 10 chars: {os.getenv('OPENAI_API_KEY')[:10] if os.getenv('OPENAI_API_KEY') else 'None'}")
+
+# Debug print
+print(f"OPENAI_API_KEY loaded: {'Yes' if os.getenv('OPENAI_API_KEY') else 'No'}")
 
 # Load environment variables from .env file
 load_dotenv()
@@ -15,7 +33,7 @@ SECRET_KEY = 'django-insecure-uxm(q^+zwk$=z!(n2($1a(zfycy2o%95aosn1yidy-tz+n6dtq
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = []
+ALLOWED_HOSTS = ['134.122.66.170', 'localhost', '127.0.0.1']
 
 # Application definition
 INSTALLED_APPS = [
@@ -24,7 +42,7 @@ INSTALLED_APPS = [
     'django.contrib.contenttypes',
     'django.contrib.sessions',
     'django.contrib.messages',
-    'django.contrib.staticfiles',
+    'django.contrib.staticfiles',\
     'careers',
     'corsheaders',
 ]
@@ -103,13 +121,14 @@ STATIC_ROOT = BASE_DIR / 'staticfiles'  # Add this for production
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
 # OpenAI Settings
-OPENAI_API_KEY = os.getenv('OPENAI_API_KEY')
+OPENAI_API_KEY = os.getenv('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')
 if not OPENAI_API_KEY:
     raise ValueError("No OPENAI_API_KEY set in environment variables")
 
 # Security Settings
 SECURE_BROWSER_XSS_FILTER = True
 SECURE_CONTENT_TYPE_NOSNIFF = True
+
 X_FRAME_OPTIONS = 'DENY'
 
 # CORS Settings
@@ -143,3 +162,40 @@ STATICFILES_DIRS = [
     BASE_DIR / 'static',
 ]
 STATIC_ROOT = BASE_DIR / 'staticfiles'
+LOGGING = {
+    'version': 1,
+    'disable_existing_loggers': False,
+    'formatters': {
+        'verbose': {
+            'format': '{levelname} {asctime} {module} {process:d} {thread:d} {message}',
+            'style': '{',
+        },
+    },
+    'handlers': {
+        'console': {
+            'class': 'logging.StreamHandler',
+            'formatter': 'verbose',
+        },
+        'file': {
+            'class': 'logging.FileHandler',
+            'filename': '/var/log/gunicorn/error.log',
+            'formatter': 'verbose',
+        },
+    },
+    'loggers': {
+        '': {  # Root logger
+            'handlers': ['console', 'file'],
+            'level': 'DEBUG',
+        },
+        'django': {
+            'handlers': ['console', 'file'],
+            'level': 'DEBUG',
+            'propagate': True,
+        },
+        'django.request': {
+            'handlers': ['console', 'file'],
+            'level': 'DEBUG',
+            'propagate': True,
+        },
+    },
+}

@@ -1,0 +1,10 @@
+[0;1;31m×[0m gunicorn.service - gunicorn daemon
+     Loaded: loaded (/etc/systemd/system/gunicorn.service; enabled; vendor preset: enabled)
+     Active: [0;1;31mfailed[0m (Result: exit-code) since Wed 2025-01-01 12:40:49 UTC; 1min 1s ago
+   Main PID: 27644 (code=exited, status=203/EXEC)
+        CPU: 2ms
+
+Jan 01 12:40:49 bedford-career-counselling systemd[27644]: [0;1;31m[0;1;39m[0;1;31mgunicorn.service: Failed at step EXEC spawning /var/www/bedford/venv/bin/gunicorn: No such file or directory[0m
+Jan 01 12:40:49 bedford-career-counselling systemd[1]: Started gunicorn daemon.
+Jan 01 12:40:49 bedford-career-counselling systemd[1]: [0;1;39m[0;1;31m[0;1;39mgunicorn.service: Main process exited, code=exited, status=203/EXEC[0m
+Jan 01 12:40:49 bedford-career-counselling systemd[1]: [0;1;38;5;185m[0;1;39m[0;1;38;5;185mgunicorn.service: Failed with result 'exit-code'.[0m

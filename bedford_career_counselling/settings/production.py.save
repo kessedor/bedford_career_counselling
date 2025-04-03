@@ -1,0 +1,26 @@
+from .base import *
+
+DEBUG = False
+ALLOWED_HOSTS = ['134.122.66.170', 'localhost', '127.0.0.1']
+
+# Static files
+STATIC_URL = '/static/'
+STATIC_ROOT = '/var/www/bedford/static'
+
+# Security settings
+CSRF_COOKIE_SECURE = True
+SESSION_COOKIE_SECURE = True
+SECURE_SSL_REDIRECT = False
+
+# Make sure these are defined
+ROOT_URLCONF = 'bedford_career_counselling.urls'
+WSGI_APPLICATION = 'bedford_career_counselling.wsgi.application'
+
+# Database
+DATABASES = {
+    'default': {
+        'ENGINE': 'django.db.backends.sqlite3',
+        'NAME': BASE_DIR / 'db.sqlite3',
+    }
+}
+ 
